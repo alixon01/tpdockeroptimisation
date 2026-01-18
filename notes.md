@@ -2,27 +2,39 @@
 
 \- Image: tp-node:step0
 
-\- Taille:1.72GB (content size 433MB)
+\- Taille: 1.72GB (content size 433MB)
 
-\- Build time:3.70s
+\- Build time: 3.70s
 
 \- Remarques:
 
-FROM node:latest (non pin + lourd)
+&nbsp; - Base image node:latest (non pin, lourde)
+
+&nbsp; - Copiait node\_modules depuis l’hôte (mauvaise pratique)
+
+&nbsp; - npm install au lieu de npm ci (moins reproductible)
+
+&nbsp; - apt-get + build-essential dans l’image finale (gonfle l’image)
+
+&nbsp; - NODE\_ENV=development dans l’image finale
 
 
 
-COPY node\_modules (mauvaise pratique)
+\## Step1 (.dockerignore + fix Dockerfile: no COPY node\_modules)
+
+\- Image: tp-node:step1
+
+\- Taille: 1.65GB (content size 412MB)
+
+\- Build time: 3.17s
+
+\- Impact:
+
+&nbsp; - Contexte de build réduit (.dockerignore)
+
+&nbsp; - Meilleur cache Docker (COPY package\*.json puis npm ci)
+
+&nbsp; - Suppression de COPY node\_modules (build plus propre et portable)
 
 
-
-npm install (moins reproductible que npm ci)
-
-
-
-apt-get install build-essential dans l’image finale (gonfle l’image)
-
-
-
-NODE\_ENV=development (pas prod)
 
