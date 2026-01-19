@@ -8,15 +8,15 @@
 
 \- Remarques:
 
-&nbsp; - Base image node:latest (non pin, lourde)
+  - Base image node:latest (non pin, lourde)
 
-&nbsp; - Copiait node\_modules depuis l’hôte (mauvaise pratique)
+  - Copiait node\_modules depuis l’hôte (mauvaise pratique)
 
-&nbsp; - npm install au lieu de npm ci (moins reproductible)
+  - npm install au lieu de npm ci (moins reproductible)
 
-&nbsp; - apt-get + build-essential dans l’image finale (gonfle l’image)
+  - apt-get + build-essential dans l’image finale (gonfle l’image)
 
-&nbsp; - NODE\_ENV=development dans l’image finale
+  - NODE\_ENV=development dans l’image finale
 
 
 
@@ -30,11 +30,31 @@
 
 \- Impact:
 
-&nbsp; - Contexte de build réduit (.dockerignore)
+  - Contexte de build réduit (.dockerignore)
 
-&nbsp; - Meilleur cache Docker (COPY package\*.json puis npm ci)
+  - Meilleur cache Docker (COPY package\*.json puis npm ci)
 
-&nbsp; - Suppression de COPY node\_modules (build plus propre et portable)
+  - Suppression de COPY node\_modules (build plus propre et portable)
+
+
+
+\## Step2 (node:22-alpine + deps prod)
+
+\- Image: tp-node:step2
+
+\- Taille: 256MB (content size 62MB)
+
+\- Build time: 31.17s
+
+\- Remarques:
+
+&nbsp; - Passage de node:latest (Debian) à node:22-alpine (beaucoup plus léger)
+
+&nbsp; - NODE\_ENV=production
+
+&nbsp; - npm ci --omit=dev : n’installe pas les dépendances de dev
+
+&nbsp; - Image finale drastiquement réduite (1.65GB -> 256MB)
 
 
 

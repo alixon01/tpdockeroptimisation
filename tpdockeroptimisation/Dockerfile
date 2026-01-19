@@ -1,19 +1,12 @@
-FROM node:latest
+FROM node:22-alpine
 WORKDIR /app
 
-# 1) copier uniquement les manifests pour profiter du cache
+ENV NODE_ENV=production
+
 COPY package*.json ./
+RUN npm ci --omit=dev
 
-# 2) install reproductible (lockfile présent)
-RUN npm ci
-
-# 3) copier le reste du code
 COPY . .
-
-ENV NODE_ENV=development
 EXPOSE 3000 4000 5000
-
-RUN npm run build
 CMD ["node", "server.js"]
-
 
