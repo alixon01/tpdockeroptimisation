@@ -48,13 +48,29 @@
 
 \- Remarques:
 
-&nbsp; - Passage de node:latest (Debian) à node:22-alpine (beaucoup plus léger)
+  - Passage de node:latest (Debian) à node:22-alpine (beaucoup plus léger)
 
-&nbsp; - NODE\_ENV=production
+  - NODE\_ENV=production
 
-&nbsp; - npm ci --omit=dev : n’installe pas les dépendances de dev
+  - npm ci --omit=dev : n’installe pas les dépendances de dev
 
-&nbsp; - Image finale drastiquement réduite (1.65GB -> 256MB)
+  - Image finale drastiquement réduite (1.65GB -> 256MB)
+
+
+
+\## Step3 (run as non-root)
+
+\- Image: tp-node:step3
+
+\- Taille: 256MB (content size 62MB)
+
+\- Build time: 3.99s
+
+\- Remarques:
+
+&nbsp; - Ajout de `USER node` pour éviter l’exécution en root (bonne pratique sécurité)
+
+&nbsp; - Aucun impact sur la taille, mais réduit les risques si le conteneur est compromis
 
 
 
