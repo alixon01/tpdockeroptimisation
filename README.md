@@ -1,64 +1,80 @@
 # TP Docker – Optimisation d’une application Node.js
 
+a partir d’un Dockerfile volontairement non optimisé on améliore:
+- la taille de l’image
+- le temps de build
+- la reproductibilité du build
+- la sécurité du conteneur
 
-À partir d’une application Node.js volontairement non optimisée, plusieurs étapes d’amélioration sont réalisées afin de :
-- réduire la taille de l’image
-- améliorer le temps de build
-- rendre le build reproductible
-- renforcer la sécurité du conteneur
+## 2. l’application
 
-## 2. Description de l’application
+L’application fournie est simple :
+- un fichier `server.js`
+- un serveur Node.js
+- écoute sur le port 3000
+- affiche un message "Hello World"
 
-L’application est un serveur Node.js très simple :
-- fichier principal : `server.js`
-- serveur HTTP écoutant sur le port 3000
-- réponse affichée :
---> Hello world — serveur volontairement non optimisé mais fonctionnel
+## 3. Step0 – baseline Dockerfile non optimisé
 
-## 3. Step0 – Baseline (image non optimisée)
-### Dockerfile (principe)
-- Image de base : `node:latest`
-- Copie du dossier `node_modules` depuis la machine hôte
-- Utilisation de `npm install`
-- Installation de dépendances système via `apt-get`
-- Exécution en tant que `root`
-- Variable `NODE_ENV=development`
+Au départ le Dockerfile contient plusieurs mauvaises pratiques :
+- image de base `node:latest`
+- copie du dossier `node_modules` depuis la machine hôte
+- utilisation de `npm install`
+- installation de dépendances système inutiles (`apt-get`)
+- variable `NODE_ENV=development`
+- exécution du conteneur en tant que `root`
 
-### Problèmes identifiés
-- Image très lourde
-- Build non reproductible
-- Mauvaise gestion du cache Docker
-- Risques de sécurité (root)
-- Dépendances inutiles dans l’image finale
-### Résultats
+### lES problèmes observés:
+- l’image est très lourde
+- le build dépend de la machine locale
+- le cache Docker est mal utilisé
+- des dépendances inutiles sont présentes dans l’image finale
+- risque de sécurité lié à l’utilisateur `root`
+
+### résultats:
 - Image : `tp-node:step0`
 - Taille : **1.72 GB** (content size : 433 MB)
-- Temps de build : **~3.7 s**
+- Temps de build : **environ 3.7 secondes**
+Cette étape sert de référence pour comparer les optimisations par la suite
 
-## Step1 – Nettoyage du build et cache Docker
+## 4. Step1 – nettoyage du build et amélioration du cache
+### Modifications apportées
 
-### Optimisations réalisées
-- Ajout d’un fichier `.dockerignore`
-- Suppression de `COPY node_modules`
-- Copie séparée des fichiers `package.json` et `package-lock.json`
-- Utilisation de `npm ci` (installation reproductible)
+- ajout d’un fichier `.dockerignore`
+- suppression de `COPY node_modules`
+- copie séparée de `package.json` et `package-lock.json`
+- remplacement de `npm install` par `npm ci`
 
+## Explication des commandes
 
-Le cache Docker est mieux exploité
-Le build devient portable (indépendant de la machine hôte)
-Le contexte de build est réduit
+npm ci --> installe les dépendances à partir du fichier `package-lock.json`.
+contrairement à `npm install` elle garantit que les mêmes versions seront
+installées à chaque build (build reproductible) 
+Le fait de copier d’abord `package.json` et `package-lock.json` permet également à Docker de réutiliser le cache si ces fichiers ne changent pas, ce qui accélère les builds suivants.
 
-### Résultats
+### Résultats:
 - Image : `tp-node:step1`
 - Taille : **1.65 GB** (content size : 412 MB)
 - Temps de build : **~3.2 s**
 
-## 5. Step2 – Réduction drastique de la taille
-Réduire fortement la taille de l’image finale.
+## Step2 – Réduction  de la taille de l’image
+- passage de `node:latest` à `node:22-alpine`
+- passage en mode production
+-on installe uniquement les dépendances nécessaires à l’exécution
 
-### Optimisations réalisées
-- Passage de `node:latest` (Debian) à `node:22-alpine`
-- Définition de `NODE_ENV=production`
-- Installation uniquement des dépendances de production :
-  ```bash
-  npm ci --omit=dev
+npm ci --omit=dev  ---> Cette commande installe uniquement les dépendances de production les dépendances de développement ne sont pas nécessaires dans l’image finale et augmentent inutilement sa taille
+l’image Alpine est beaucoup plus légère que les images basées sur Debian
+
+## Résultats:
+Image : tp-node:step2
+taille : 256 MB (content size : 62 MB)
+temps de build : ~31 s
+
+## Step3 – Sécurité : exécution en tant que non-root
+USER node ---> Par défaut un conteneur Docker s’exécute en tant que root
+non-root permet de limiter les risques en cas de faille de sécurité
+
+## Résultats
+image : tp-node:step3
+Taille : 256 MB (content size : 62 MB)
+temps de build : ~4 s
